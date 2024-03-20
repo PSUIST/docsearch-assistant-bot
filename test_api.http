@@ -1,0 +1,15 @@
+
+POST http://127.0.0.1:8000/thread
+Content-Type: application/json
+access_token: 76b77f8749a14af4b2ae0ff591bcf398
+
+###
+
+POST http://127.0.0.1:8000/message
+Content-Type: application/json
+access_token: 76b77f8749a14af4b2ae0ff591bcf398
+
+{
+    "message": "There's a reported issue for Applications whose Port_Name is INDY46, can you read the logs of associated system name and provide a summary of the errors you can find in the logs",
+    "thread_id": "thread_5zeBZKmFBVULJzHJvm0CxwDY"
+}

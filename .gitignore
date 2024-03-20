@@ -1,0 +1,9 @@
+/files
+/.tmp
+/env
+.env
+/.vs
+/DotNet/.vs
+/.idea
+/tmp
+/__pycache__
