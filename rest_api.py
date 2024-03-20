@@ -6,16 +6,14 @@ import time
 import json
 from pydantic import BaseModel
 import uvicorn
-from account import get_account
-from cmdb import get_data_for_computer
-from logs import get_logs
-from crs import get_crs
+from fastapi.middleware.cors import CORSMiddleware
+from functions.company import get_company_info
 from dotenv import load_dotenv
 
 load_dotenv(".env")
 
 #assistant gets created in the notebook. get the id from the notebook and added here
-assistant_id = "asst_czlwrU133DnZcFXNLY2s1iTE"
+assistant_id = "asst_si2Szhtw1XK8mulXeE8UhEzl"
     
 client = AzureOpenAI(
     api_key=os.getenv("AZURE_OPENAI_API_KEY"),  
@@ -43,6 +41,19 @@ async def get_api_key(api_key_header: str = Depends(api_key_header)):
 
 app = FastAPI()
 
+
+origins = [    
+    "*",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 # Pydantic models
 class MessageRequest(BaseModel):
     message: str
@@ -55,9 +66,11 @@ class ThreadResponse(BaseModel):
     thread_id: str
 
 
-#add the available functions here   
-available_functions = {"get_account": get_account, "get_data_for_computer":get_data_for_computer, "get_logs":get_logs, "get_crs":get_crs}
 
+
+
+#add the available functions here   
+available_functions = {"get_company_info": get_company_info}
 def wait_for_run(run, thread_id):
 
     max_steps = 100
