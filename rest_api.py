@@ -8,12 +8,22 @@ from pydantic import BaseModel
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from functions.company import get_company_info
+from functions.news import get_news
+from functions.stock import get_stock_info
+from functions.email import send_summary
 from dotenv import load_dotenv
+import logging
+
+# Create a custom logger
+logger = logging.getLogger(__name__)
+# Create a file handler
+handler = logging.FileHandler('app.log')
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 load_dotenv(".env")
 
-#assistant gets created in the notebook. get the id from the notebook and added here
-assistant_id = "asst_si2Szhtw1XK8mulXeE8UhEzl"
+assistant_id = "asst_5N02i9PqB3VVqUYSAbkm76WH"
     
 client = AzureOpenAI(
     api_key=os.getenv("AZURE_OPENAI_API_KEY"),  
@@ -41,7 +51,6 @@ async def get_api_key(api_key_header: str = Depends(api_key_header)):
 
 app = FastAPI()
 
-
 origins = [    
     "*",
 ]
@@ -65,13 +74,9 @@ class MessageResponse(BaseModel):
 class ThreadResponse(BaseModel):
     thread_id: str
 
-
-
-
-
 #add the available functions here   
-available_functions = {"get_company_info": get_company_info}
-def wait_for_run(run, thread_id):
+available_functions = {"get_company_info": get_company_info, "get_news": get_news, "get_stock_info": get_stock_info, "send_summary": send_summary}
+def main_loop(run, thread_id):
 
     max_steps = 100
     sleep = 0.5
@@ -87,33 +92,36 @@ def wait_for_run(run, thread_id):
                     tool_calls = run.required_action.submit_tool_outputs.tool_calls
 
                     for call in tool_calls:
-                        if call.type == "function":
+                        if call.type == "function":                            
                             if call.function.name not in available_functions:
+                                logger.info(f"Function not availble for thread_id: {thread_id} and run_id: {run.id}: {call.function.name}")
                                 raise Exception("Function requested by the model does not exist")
                             function_to_call = available_functions[call.function.name]                            
                             tool_response = function_to_call(**json.loads(call.function.arguments))                           
                             tool_responses.append({"tool_call_id": call.id, "output": tool_response})
-                            print(call.function.name)
-                            print(call.function.arguments)
-                    print(tool_responses)
-                    run = client.beta.threads.runs.submit_tool_outputs(thread_id=thread_id, run_id=run.id, tool_outputs=tool_responses
-                )
+                            
+                            logger.info(f"Function name for thread_id: {thread_id} and run_id: {run.id}: {call.function.name}") 
+                            logger.info(f"Function args for thread_id: {thread_id} and run_id: {run.id}: {call.function.arguments}")  
+                            
+                    logger.info(f"Tool response for thread_id: {thread_id} and run_id: {run.id}: {tool_responses}")
+                    run = client.beta.threads.runs.submit_tool_outputs(thread_id=thread_id, run_id=run.id, tool_outputs=tool_responses)
             if run.status == "failed":
-                print("Run failed.")
+                logger.info(f"Run failed for threadid: {thread_id} and run_id: {run.id}")                 
                 break
             if run.status == "completed":
+                logger.info(f"Run completed for threadid: {thread_id} and run_id: {run.id}") 
                 break
-            time.sleep(sleep)
+            #time.sleep(sleep)
 
     except Exception as e:
-        print(e)
+        logger.info(f"Errors for threadid: {thread_id} error: {e}")        
 
     return run
 
 # Define the bot message entry endpoint 
 @app.post("/message/", response_model=MessageResponse)
 async def message(item: MessageRequest, api_key: APIKey = Depends(get_api_key)):
-    print(f"Message received: {item.message}")
+    logger.info(f"Message received: {item.message}")
 
     # Send message to assistant
     message = client.beta.threads.messages.create(
@@ -127,7 +135,7 @@ async def message(item: MessageRequest, api_key: APIKey = Depends(get_api_key)):
         assistant_id=assistant_id # use the assistant id defined aboe
     )
 
-    run = wait_for_run(run, item.thread_id)
+    run = main_loop(run, item.thread_id)
 
     if run.status == 'completed':
         messages = client.beta.threads.messages.list(limit=1, thread_id=item.thread_id)
@@ -141,8 +149,8 @@ async def message(item: MessageRequest, api_key: APIKey = Depends(get_api_key)):
 
 @app.post("/thread/", response_model=ThreadResponse)
 async def thread(api_key: APIKey = Depends(get_api_key)):
-    thread = client.beta.threads.create()
-    print(f"Thread created with ID: {thread.id}")
+    thread = client.beta.threads.create()    
+    logger.info(f"Thread created with ID: {thread.id}")
     return ThreadResponse(thread_id=thread.id)
 
 # Uvicorn startup

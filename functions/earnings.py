@@ -5,9 +5,9 @@ import logging
 # Create a custom logger
 logger = logging.getLogger(__name__)
 # Create a file handler
-#handler = logging.FileHandler('app.log')
-# Add the handler to the logger
-#logger.addHandler(handler)
+handler = logging.FileHandler('app.log')
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 def get_earnings_call_transcript(company_name: str):         
     source_url = os.getenv("STOCK_API_URL")    

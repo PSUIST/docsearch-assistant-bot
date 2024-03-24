@@ -16,7 +16,7 @@ It creates two api \thread and \message. Thread must be called first to innitiat
 
 Sample paid loads are available in the test_api.http file.
 
-To run locally type `# uvicorn FastAPI:app --reload` in a command prompt.
+To run locally type `# uvicorn rest_api:app --reload` in a command prompt.
 
 ## test_api
 

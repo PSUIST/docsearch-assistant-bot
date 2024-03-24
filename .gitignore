@@ -3,7 +3,7 @@
 /env
 .env
 /.vs
-/DotNet/.vs
-/.idea
 /tmp
 /__pycache__
+app.log
+/functions/__pycache__
