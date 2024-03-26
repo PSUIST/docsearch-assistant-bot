@@ -10,7 +10,7 @@ handler = logging.FileHandler('app.log')
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-def get_stock_info(company_stock_ticker):
+def get_documents(query: str):
     search_service_name = os.getenv("AZURE_AISEARCH_ENDPOINT")
     api_key = os.getenv("AZURE_AISEARCH_KEY")
 
@@ -21,7 +21,7 @@ def get_stock_info(company_stock_ticker):
     logger.info(f"Getting stock information at {url}")
     params = {
         'api-version': api_version,
-        'search': company_stock_ticker
+        'search': query
     }
     headers = {
         'api-key': api_key,

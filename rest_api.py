@@ -7,10 +7,8 @@ import json
 from pydantic import BaseModel
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
-from functions.company import get_company_info
-from functions.news import get_news
-from functions.stock import get_stock_info
-from functions.email import send_summary
+from functions.documents import get_documents
+
 from dotenv import load_dotenv
 import logging
 
@@ -75,7 +73,7 @@ class ThreadResponse(BaseModel):
     thread_id: str
 
 #add the available functions here   
-available_functions = {"get_company_info": get_company_info, "get_news": get_news, "get_stock_info": get_stock_info, "send_summary": send_summary}
+available_functions = {"get_documents": get_documents}
 def main_loop(run, thread_id):
 
     max_steps = 100
